@@ -1,25 +1,24 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState(''); // State for email
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Prevent default form submission
-
-        console.log('Username:', username); // Log values
-        console.log('Password:', password); // Log values
-        console.log('Email:', email); // Log values
-
+        e.preventDefault();
+        
         try {
-            const response = await axios.post('http://localhost:5000/budgets/register', { username, password, email }); // Include email
-            console.log(response.data); // Log response
+            const response = await axios.post('http://localhost:5000/budgets/register', { username, password, email });
+            console.log(response.data);
             alert('Registration successful!');
+            navigate('/login'); // Redirect to login page after successful registration
         } catch (error) {
             console.error('There was an error registering!', error);
-            alert('Registration failed. Please try again.'); // Notify user
+            alert('Registration failed. Please try again.');
         }
     };
 
