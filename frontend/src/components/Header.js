@@ -11,11 +11,13 @@ const Header = ({ isLoggedIn, username, onLogout }) => {
           {isLoggedIn ? (
             <>
               <span>Hello, {username}</span>
+              <Link to="/">Home</Link>
               <Link to="/dashboard">Dashboard</Link>
               <button onClick={onLogout}>Logout</button> {/* Logout button */}
             </>
           ) : (
             <>
+              <Link to="/">Home</Link>
               <Link to="/login">Login</Link>
               <Link to="/register">Register</Link>
             </>
