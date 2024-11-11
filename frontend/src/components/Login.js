@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom"; // Import useNavigate
 const Login = ({ setIsLoggedIn, setUsername }) => {
   const [username, setUsernameInput] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(""); // New state for recovery email
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false); // State for modal visibility
   const navigate = useNavigate(); // Initialize useNavigate
 
   const handleSubmit = (e) => {
@@ -36,6 +38,18 @@ const Login = ({ setIsLoggedIn, setUsername }) => {
       });
   };
 
+  const handleRecoverySubmit = (e) => {
+    e.preventDefault();
+    axios.post("http://localhost:5000/budgets/recover-password", { email })
+      .then(() => {
+        alert("If the email exists, a recovery link has been sent.");
+        setShowRecoveryModal(false);
+      })
+      .catch((error) => {
+        alert("Error sending recovery email: " + (error.response ? error.response.data.message : error.message));
+      });
+  };
+
   return (
     <div>
       <h2>Login</h2>
@@ -54,6 +68,20 @@ const Login = ({ setIsLoggedIn, setUsername }) => {
         />
         <button type="submit">Login</button>
       </form>
+      
+      <button onClick={() => setShowRecoveryModal(true)}>Forgot your password?</button>
+
+      {showRecoveryModal && (
+        <div className="modal">
+          <h3>Recover Password</h3>
+          <form onSubmit={handleRecoverySubmit}>
+            <label>Email: </label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <button type="submit">Send Recovery Email</button>
+            <button onClick={() => setShowRecoveryModal(false)}>Cancel</button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

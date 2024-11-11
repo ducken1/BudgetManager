@@ -85,4 +85,49 @@ router.get('/verify-user', authenticateToken, async (req, res) => {
     }
 });
 
+// @route   POST /recover-password
+router.post('/recover-password', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        // Find the user by email
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: 'Email not found' });
+
+        // Generate a random token or temporary password
+        const tempPassword = Math.random().toString(36).slice(-8); // Simple random string
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        // Update the user's password in the database (optional, based on your security policy)
+        user.password = hashedPassword;
+        await user.save();
+
+        // Configure nodemailer to send email
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+            service: 'Gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Password Recovery',
+            text: `Your temporary password is: ${tempPassword}`,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                return res.status(500).json({ message: 'Failed to send recovery email', error });
+            }
+            res.status(200).json({ message: 'Recovery email sent successfully' });
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error during password recovery', error: error.message });
+    }
+});
+
 module.exports = router;
