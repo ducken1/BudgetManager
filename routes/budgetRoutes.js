@@ -5,6 +5,7 @@ const Budget = require('../models/Budget');
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const { createToken, authenticateToken } = require('../auth');
+const { authMiddleware } = require('../auth'); // Adjust path based on your directory structure
 
 // @route   POST /register
 router.post('/register', async (req, res) => {
@@ -127,6 +128,43 @@ router.post('/recover-password', async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: 'Error during password recovery', error: error.message });
+    }
+});
+
+// Route to set the limit for a user
+router.post("/setLimit", authenticateToken, async (req, res) => {
+    const { limit } = req.body;
+    if (!limit || isNaN(limit) || limit <= 0) {
+        return res.status(400).json({ message: "Invalid limit value. Must be a positive number." });
+    }
+
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.limit = limit;
+        await user.save();
+
+        res.status(200).json({ message: "Limit set successfully", limit });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+  
+// Route to get the current limit for a user
+router.get("/getLimit", authenticateToken, async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      res.status(200).json({ limit: user.limit });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error });
     }
 });
 

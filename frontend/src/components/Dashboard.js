@@ -1,4 +1,3 @@
-// components/Dashboard.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -6,33 +5,59 @@ const Dashboard = () => {
   const [budgets, setBudgets] = useState([]);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState("necessity"); // Default type
+  const [type, setType] = useState("necessity");
+  const [totalMoney, setTotalMoney] = useState(0);
+  const [limit, setLimit] = useState(null); // Actual limit fetched from the backend
+  const [newLimit, setNewLimit] = useState(""); // For user input when setting limit
+  const [limitNotification, setLimitNotification] = useState(false);
 
   useEffect(() => {
     fetchBudgets();
+    fetchUserLimit();
   }, []);
 
+  useEffect(() => {
+    if (limit !== null && totalMoney < limit) {
+      setLimitNotification(true);
+    } else {
+      setLimitNotification(false);
+    }
+  }, [totalMoney, limit]);
+
   const fetchBudgets = async () => {
-    const token = localStorage.getItem("token"); // Get token from localStorage
+    const token = localStorage.getItem("token");
     try {
       const response = await axios.get("http://localhost:5000/budgets", {
-        headers: { Authorization: `Bearer ${token}` }, // Include token in request headers
+        headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Fetched Budgets:", response.data);
       setBudgets(response.data);
+
+      const total = response.data.reduce((sum, budget) => sum + budget.amount, 0);
+      setTotalMoney(total);
     } catch (error) {
       console.error("Error fetching budgets", error);
+    }
+  };
+
+  const fetchUserLimit = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await axios.get("http://localhost:5000/budgets/getLimit", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data.limit !== undefined) {
+        setLimit(response.data.limit); // Set limit from MongoDB
+      } else {
+        setLimit(null); // No limit set in the database
+      }
+    } catch (error) {
+      console.error("Error fetching limit:", error);
     }
   };
 
   const handleAddBudget = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-
-    if (!token) {
-      alert("You must be logged in to add a budget.");
-      return;
-    }
 
     try {
       const response = await axios.post(
@@ -58,16 +83,53 @@ const Dashboard = () => {
         "Error adding budget:",
         error.response ? error.response.data : error.message
       );
-      alert(
-        "Error adding budget: " +
-          (error.response ? error.response.data.message : error.message)
+    }
+  };
+
+  const handleSetLimit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+
+    const parsedLimit = Number(newLimit);
+    if (isNaN(parsedLimit) || parsedLimit <= 0) {
+      alert("Please enter a valid positive limit.");
+      return;
+    }
+
+    try {
+      await axios.post(
+        "http://localhost:5000/budgets/setLimit",
+        { limit: parsedLimit },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
+
+      alert(`Limit set to $${parsedLimit}`);
+      fetchUserLimit(); // Refresh the limit from backend
+      setNewLimit(""); // Clear input
+    } catch (error) {
+      console.error("Error setting limit:", error.response ? error.response.data : error.message);
     }
   };
 
   return (
     <div>
       <h2>Your Budgets</h2>
+
+      {/* Display total money */}
+      <h3>Total Money: ${totalMoney}</h3>
+
+      {/* Display the user's limit from MongoDB */}
+      <h3>Your Limit: ${limit !== null ? limit : "Not Set"}</h3>
+
+      {/* Notification when totalMoney is below the limit */}
+      {limitNotification && (
+        <div style={{ color: "red", fontWeight: "bold" }}>
+          Warning: Your total money is below the set limit!
+        </div>
+      )}
+
       <ul>
         {budgets.map((budget) => (
           <li key={budget._id}>
@@ -99,6 +161,18 @@ const Dashboard = () => {
           <option value="profit">Profit</option>
         </select>
         <button type="submit">Add Budget</button>
+      </form>
+
+      <h3>Set a Limit</h3>
+      <form onSubmit={handleSetLimit}>
+        <input
+          type="number"
+          value={newLimit}
+          onChange={(e) => setNewLimit(e.target.value)}
+          placeholder="Set your limit"
+          required
+        />
+        <button type="submit">Set Limit</button>
       </form>
     </div>
   );
