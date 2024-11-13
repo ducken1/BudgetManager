@@ -169,3 +169,38 @@ router.get("/getLimit", authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+
+// Posodobi budget
+router.put('/:id', authenticateToken, async (req, res) => {
+    try {
+        const updatedBudget = await Budget.findByIdAndUpdate(
+            req.params.id,
+            { name: req.body.name, amount: req.body.amount, type: req.body.type },
+            { new: true }
+        );
+        if (!updatedBudget) {
+            return res.status(404).json({ message: "Budget not found" });
+        }
+        res.json(updatedBudget);
+    } catch (error) {
+        console.error("Error updating budget:", error);
+        res.status(500).json({ message: "Error updating budget" });
+    }
+});
+
+// Izbriši budget
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const deletedBudget = await Budget.findByIdAndDelete(req.params.id);
+        if (!deletedBudget) {
+            return res.status(404).json({ message: "Budget not found" });
+        }
+        res.json({ message: "Budget deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting budget:", error);
+        res.status(500).json({ message: "Error deleting budget" });
+    }
+});
+
+module.exports = router;
+

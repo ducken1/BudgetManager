@@ -1,0 +1,133 @@
+/* Glavni kontejner */
+.dashboard-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    color: #333;
+    background-color: #f4f6f8;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Naslovi in obvestila */
+h2, h3 {
+    color: #007bff;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.warning {
+    color: #ffa500;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.alert {
+    color: #dc3545;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+}
+
+/* Seznami kategorij in budgetov */
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+ul li {
+    padding: 10px;
+    margin: 5px 0;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Poravnava gumbov v desno */
+.budget-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.budget-item-text {
+    flex: 1;
+}
+
+/* Skupina gumbov za urejanje in brisanje */
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+/* Gumbi */
+button {
+    padding: 6px 12px;
+    margin-left: 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button.edit {
+    background-color: #007bff;
+    color: white;
+}
+
+button.delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+button.submit {
+    background-color: #28a745;
+    color: white;
+}
+
+button.cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Obrazci in vhodi */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+form input, form select {
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+}
+
+form input:focus, form select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+form label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Razmik za obrazec in komponente */
+.form-section {
+    margin-bottom: 20px;
+}

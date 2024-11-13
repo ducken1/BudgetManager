@@ -7,6 +7,8 @@ import Dashboard from './components/Dashboard';
 import Header from './components/Header';
 import axios from 'axios';
 
+
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
@@ -63,7 +65,6 @@ function App() {
           <Route path="/register" element={isLoggedIn ? <div>You're already logged in!</div> : <Register />} />
           <Route path="/login" element={isLoggedIn ? <div>You're already logged in!</div> : <Login setIsLoggedIn={setIsLoggedIn} setUsername={setUsername} />} />
           <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
-          <Route path="/" element={<h1>Welcome to Budget Manager</h1>} />
         </Routes>
       </div>
     </Router>
