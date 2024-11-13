@@ -1,16 +1,10 @@
 const mongoose = require('mongoose');
 
 const budgetSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' }, // Reference to the User model
-    name: { type: String, required: true },
-    amount: { type: Number, required: true },
-    type: { 
-        type: String,
-        enum: ['necessity', 'luxury', 'bills', 'profit'], // Choice type
-        required: true 
-    },
-}, { timestamps: true }); // Automatically add createdAt and updatedAt fields
+    name: String,
+    amount: Number,
+    type: String, // npr. 'Necessity', 'Luxury', 'Bills', 'Profit'
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+});
 
-const Budget = mongoose.model('Budget', budgetSchema);
-
-module.exports = Budget;
+module.exports = mongoose.model('Budget', budgetSchema);
