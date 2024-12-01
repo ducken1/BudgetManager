@@ -25,6 +25,13 @@ describe('Dashboard Component', () => {
     expect(screen.getByText(/netflix/i)).toBeInTheDocument();
   });
 
+  jest.mock('react-router-dom', () => ({
+    BrowserRouter: ({ children }) => <div>{children}</div>, // Mock BrowserRouter as a simple div wrapper
+    Route: ({ children }) => <div>{children}</div>, // Mock Route
+    Routes: ({ children }) => <div>{children}</div>, // Mock Routes
+    Navigate: () => null, // Mock Navigate to do nothing
+  }));
+
   // 2. Add a new budget
   test('adds a new budget correctly', async () => {
     axios.post.mockResolvedValueOnce({ status: 201 });
