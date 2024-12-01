@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for Budget Manager
 
 on:
   push:
@@ -9,78 +9,69 @@ on:
       - main
 
 jobs:
-  frontend-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Cache Node Modules
-        uses: actions/cache@v3
-        with:
-          path: frontend/node_modules
-          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-frontend-
-
-      - name: Set Up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install Dependencies
-        run: |
-          cd frontend
-          npm install
-
-      - name: Run Frontend Tests
-        run: |
-          cd frontend
-          npm test -- --coverage
-
-      - name: Upload Frontend Coverage
-        if: success()
-        uses: actions/upload-artifact@v3
-        with:
-          name: frontend-coverage
-          path: frontend/coverage
-
   backend-tests:
+    name: Run Backend Tests
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Cache Node Modules
-        uses: actions/cache@v3
-        with:
-          path: backend/node_modules
-          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-backend-
-
-      - name: Set Up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 16 # Use the Node.js version required for your project
 
       - name: Install Dependencies
         run: |
           cd backend
           npm install
 
-      - name: Set Up MongoDB URI
-        run: |
-          echo "MONGODB_URI=${{ 'mongodb+srv://ericlasic12345:tR3tN2epjGtbbrmo@database.jcoom.mongodb.net/data?retryWrites=true&w=majority&appName=Database' }}" >> .env
+      - name: Set up MongoDB
+        uses: supercharge/mongodb-github-action@1.6.0
+        with:
+          mongodb-version: '5.0'
 
-      - name: Run Backend Tests
+      - name: Run Tests
+        env:
+          MONGODB_URI: mongodb://localhost:27017/testdb
         run: |
           cd backend
-          npm test -- --coverage
+          npm test
 
-      - name: Upload Backend Coverage
+      - name: Upload Coverage Report
         if: success()
         uses: actions/upload-artifact@v3
         with:
-          name: backend-coverage
-          path: backend/coverage
+          name: backend-coverage-report
+          path: backend/coverage # Adjust path to your coverage report directory
+
+  frontend-tests:
+    name: Run Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16 # Use the Node.js version required for your project
+
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Run Tests
+        run: |
+          cd frontend
+          npm test
+
+      - name: Upload Coverage Report
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage # Adjust path to your coverage report directory
