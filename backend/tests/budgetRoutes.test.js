@@ -1,6 +1,6 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../server'); // Import your server
+const { app, server } = require('../server'); // Import server
 const Budget = require('../models/Budget');
 const User = require('../models/User');
 
@@ -19,6 +19,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await mongoose.connection.close();
+  server.close();
 });
 
 // Variables to store test data

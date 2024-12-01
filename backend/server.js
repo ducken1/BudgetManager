@@ -2,9 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const budgetRoutes = require('./routes/budgetRoutes');
+const app = express();
 require('dotenv').config();
 
-const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Poveži se z MongoDB
@@ -23,8 +23,8 @@ app.get('/', (req, res) => {
     res.send('Welcome to Budget Manager API');
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
 
-module.exports = app;
+module.exports = { app, server }; // Export both app and server
