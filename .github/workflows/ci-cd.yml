@@ -71,7 +71,7 @@ jobs:
 
       - name: Set Up MongoDB URI
         run: |
-          echo "MONGODB_URI=${{ mongodb+srv://ericlasic12345:tR3tN2epjGtbbrmo@database.jcoom.mongodb.net/data?retryWrites=true&w=majority&appName=Database }}" >> .env
+          echo "MONGODB_URI=${{ 'mongodb+srv://ericlasic12345:tR3tN2epjGtbbrmo@database.jcoom.mongodb.net/data?retryWrites=true&w=majority&appName=Database' }}" >> .env
 
       - name: Run Backend Tests
         run: |
