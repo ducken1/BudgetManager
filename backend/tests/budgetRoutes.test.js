@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../app'); // Your Express app
+const app = require('../server'); // Import the backend Express app
 
 describe('Budget API', () => {
   // 1. Fetch budgets
