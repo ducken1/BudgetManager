@@ -7,7 +7,6 @@ const jwt = require('jsonwebtoken');
 const mockUser = { id: 'mockUserId', username: 'testuser' };
 const token = jwt.sign(mockUser, process.env.JWT_SECRET || 'test-secret', { expiresIn: '1h' });
 
-jest.mock('mongoose', () => require('jest-mongoose-mock'));
 
 // Helper function to make authenticated requests
 const authenticatedRequest = (method, url, data = {}) => {
