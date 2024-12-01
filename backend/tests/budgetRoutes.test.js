@@ -4,9 +4,6 @@ const { app, server } = require('../server'); // Import server
 const Budget = require('../models/Budget');
 const User = require('../models/User');
 
-
-process.env.MONGODB_URI = 'mongodb+srv://ericlasic12345:tR3tN2epjGtbbrmo@database.jcoom.mongodb.net/data?retryWrites=true&w=majority&appName=Database'
-
 // Mock environment variables
 require('dotenv').config({ path: '.env.test' });
 
