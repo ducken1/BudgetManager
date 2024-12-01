@@ -9,10 +9,7 @@ require('dotenv').config({ path: '.env.test' });
 
 // Setup database connection for tests
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await mongoose.connect(process.env.MONGODB_URI);
   await User.deleteMany();
   await Budget.deleteMany();
 });
