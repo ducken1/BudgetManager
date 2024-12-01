@@ -63,7 +63,10 @@
     "transformIgnorePatterns": [
       "/node_modules/(?!some-react-library|another-react-library).*/"
     ],
-    "moduleFileExtensions": ["js", "jsx"],
+    "moduleFileExtensions": [
+      "js",
+      "jsx"
+    ],
     "moduleNameMapper": {
       "\\.(css|less|scss|sass)$": "identity-obj-proxy"
     }
