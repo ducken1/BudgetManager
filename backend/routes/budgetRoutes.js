@@ -6,6 +6,7 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const { createToken, authenticateToken } = require('../auth');
 const { authMiddleware } = require('../auth'); // Adjust path based on your directory structure
+const app = require('../app');
 
 // @route   POST /register
 router.post('/register', async (req, res) => {
