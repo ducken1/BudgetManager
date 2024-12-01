@@ -13,7 +13,7 @@ const Register = () => {
         e.preventDefault();
         
         try {
-            const response = await axios.post('http://localhost:5000/budgets/register', { username, password, email });
+            const response = await axios.post('http://localhost:3000/budgets/register', { username, password, email });
             console.log(response.data);
             alert('Registration successful!');
             navigate('/login'); // Redirect to login page after successful registration

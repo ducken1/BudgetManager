@@ -38,7 +38,7 @@ const Dashboard = () => {
   const fetchBudgets = async () => {
     const token = localStorage.getItem("token");
     try {
-      const response = await axios.get("http://localhost:5000/budgets", {
+      const response = await axios.get("http://localhost:3000/budgets", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBudgets(response.data);
@@ -63,7 +63,7 @@ const Dashboard = () => {
   const fetchUserLimit = async () => {
     const token = localStorage.getItem("token");
     try {
-      const response = await axios.get("http://localhost:5000/budgets/getLimit", {
+      const response = await axios.get("http://localhost:3000/budgets/getLimit", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data.limit !== undefined) {
@@ -82,7 +82,7 @@ const Dashboard = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/budgets/add",
+        "http://localhost:3000/budgets/add",
         { name, amount: Number(amount), type },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -102,7 +102,7 @@ const Dashboard = () => {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await axios.delete(`http://localhost:5000/budgets/${budgetId}`, {
+      const response = await axios.delete(`http://localhost:3000/budgets/${budgetId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Delete response:", response.data);
@@ -126,7 +126,7 @@ const Dashboard = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:5000/budgets/${editBudgetId}`,
+        `http://localhost:3000/budgets/${editBudgetId}`,
         { name, amount: Number(amount), type },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -154,7 +154,7 @@ const Dashboard = () => {
 
     try {
         const response = await axios.post(
-            "http://localhost:5000/budgets/setLimit",
+            "http://localhost:3000/budgets/setLimit",
             { limit: parsedLimit },
             { headers: { Authorization: `Bearer ${token}` } }
         );

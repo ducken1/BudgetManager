@@ -22,7 +22,7 @@ function App() {
       if (loggedInUser && token) {
         try {
           // Verify user existence
-          const response = await axios.get('http://localhost:5000/budgets/verify-user', {
+          const response = await axios.get('http://localhost:3000/budgets/verify-user', {
             headers: { Authorization: `Bearer ${token}` }
           });
 

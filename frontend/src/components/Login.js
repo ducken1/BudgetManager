@@ -16,7 +16,7 @@ const Login = ({ setIsLoggedIn, setUsername }) => {
 
     // Send a POST request to the login endpoint
     axios
-      .post("http://localhost:5000/budgets/login", { username, password })
+      .post("http://localhost:3000/budgets/login", { username, password })
       .then((response) => {
         const token = response.data.token; // Assume token is sent from backend
         console.log(response.data);
@@ -41,7 +41,7 @@ const Login = ({ setIsLoggedIn, setUsername }) => {
 
   const handleRecoverySubmit = (e) => {
     e.preventDefault();
-    axios.post("http://localhost:5000/budgets/recover-password", { email })
+    axios.post("http://localhost:3000/budgets/recover-password", { email })
       .then(() => {
         alert("If the email exists, a recovery link has been sent.");
         setShowRecoveryModal(false);
