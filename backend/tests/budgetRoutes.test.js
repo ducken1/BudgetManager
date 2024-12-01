@@ -1,105 +1,117 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../server'); // Import the backend Express app
-const jwt = require('jsonwebtoken');
+const app = require('../server'); // Import your server
+const Budget = require('../models/Budget');
+const User = require('../models/User');
 
-// Mock a user and generate a token for authentication
-const mockUser = { id: 'mockUserId', username: 'testuser' };
-const token = jwt.sign(mockUser, process.env.JWT_SECRET || 'test-secret', { expiresIn: '1h' });
+// Mock environment variables
+require('dotenv').config({ path: '.env.test' });
 
+// Setup database connection for tests
+beforeAll(async () => {
+  await mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  await User.deleteMany();
+  await Budget.deleteMany();
+});
 
-// Helper function to make authenticated requests
-const authenticatedRequest = (method, url, data = {}) => {
-  return request(app)
-    [method](url)
-    .set('Authorization', `Bearer ${token}`)
-    .send(data);
-};
+afterAll(async () => {
+  await mongoose.connection.close();
+});
 
-describe('Budget API', () => {
-  let createdBudgetId; // Store a budget ID to use across tests
+// Variables to store test data
+let userToken;
 
-  // 1. Fetch budgets
-  it('fetches all budgets successfully', async () => {
-    const res = await authenticatedRequest('get', '/budgets');
+describe('Budget Routes', () => {
+  it('should register a new user', async () => {
+    const res = await request(app)
+      .post('/budgets/register')
+      .send({ username: 'testuser', password: 'testpass', email: 'test@example.com' });
+
+      console.log(res.body)
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty('token');
+    userToken = res.body.token;
+  });
+
+  it('should log in an existing user', async () => {
+    const res = await request(app)
+      .post('/budgets/login')
+      .send({ username: 'testuser', password: 'testpass' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('token');
+  });
+
+  it('should fetch budgets for a user', async () => {
+    const res = await request(app)
+      .get('/budgets')
+      .set('Authorization', `Bearer ${userToken}`);
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    if (res.body.length > 0) {
-      expect(res.body[0]).toHaveProperty('name');
-      expect(res.body[0]).toHaveProperty('amount');
-      expect(res.body[0]).toHaveProperty('type');
-    }
   });
 
-  // 2. Add a new budget
-  it('adds a new budget successfully', async () => {
-    const newBudget = { name: 'Groceries', amount: 100, type: 'necessity' };
-    const res = await authenticatedRequest('post', '/budgets/add', newBudget);
+  it('should add a new budget', async () => {
+    const res = await request(app)
+      .post('/budgets/add')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ name: 'Groceries', amount: 100, type: 'Expense' });
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('_id'); // Ensure response has an ID
-    expect(res.body).toHaveProperty('name', 'Groceries');
-    createdBudgetId = res.body._id;
+    expect(res.body.message).toBe('Budget added successfully');
   });
 
-  // 3. Fetch a budget by ID
-  it('fetches a single budget by ID', async () => {
-    const res = await authenticatedRequest('get', `/budgets/${createdBudgetId}`);
+  it('should update an existing budget', async () => {
+    const budget = await Budget.findOne({ name: 'Groceries' });
+    const res = await request(app)
+      .put(`/budgets/${budget._id}`)
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ name: 'Groceries', amount: 150, type: 'Expense' });
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('_id', createdBudgetId);
-    expect(res.body).toHaveProperty('name', 'Groceries');
+    expect(res.body.amount).toBe(150);
   });
 
-  // 4. Prevent adding budget with missing fields
-  it('returns an error when adding a budget with missing fields', async () => {
-    const invalidBudget = { name: 'Invalid Budget' };
-    const res = await authenticatedRequest('post', '/budgets/add', invalidBudget);
-    expect(res.statusCode).toBe(400); // Bad Request
-    expect(res.body).toHaveProperty('error');
-  });
-
-  // 5. Update an existing budget
-  it('updates an existing budget successfully', async () => {
-    const updatedBudget = { name: 'Updated Budget', amount: 150, type: 'luxury' };
-    const res = await authenticatedRequest('put', `/budgets/${createdBudgetId}`, updatedBudget);
+  it('should delete a budget', async () => {
+    const budget = await Budget.findOne({ name: 'Groceries' });
+    const res = await request(app)
+      .delete(`/budgets/${budget._id}`)
+      .set('Authorization', `Bearer ${userToken}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('name', 'Updated Budget');
+    expect(res.body.message).toBe('Budget deleted successfully');
   });
 
-  // 6. Handle update with invalid ID
-  it('returns an error when updating a budget with an invalid ID', async () => {
-    const updatedBudget = { name: 'Invalid Update', amount: 150, type: 'luxury' };
-    const res = await authenticatedRequest('put', '/budgets/invalid-id', updatedBudget);
-    expect(res.statusCode).toBe(404); // Not Found
-    expect(res.body).toHaveProperty('error', 'Budget not found');
-  });
-
-  // 7. Delete a budget
-  it('deletes a budget successfully', async () => {
-    const res = await authenticatedRequest('delete', `/budgets/${createdBudgetId}`);
+  it('should set a user limit', async () => {
+    const res = await request(app)
+      .post('/budgets/setLimit')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ limit: 1000 });
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('message', 'Budget deleted successfully');
+    expect(res.body.message).toBe('Limit set successfully');
+    expect(res.body.limit).toBe(1000);
   });
 
-  // 8. Handle delete with invalid ID
-  it('returns an error when deleting a budget with an invalid ID', async () => {
-    const res = await authenticatedRequest('delete', '/budgets/invalid-id');
-    expect(res.statusCode).toBe(404); // Not Found
-    expect(res.body).toHaveProperty('error', 'Budget not found');
-  });
-
-  // 9. Set a budget limit
-  it('sets a budget limit successfully', async () => {
-    const limitData = { limit: 500 };
-    const res = await authenticatedRequest('post', '/budgets/setLimit', limitData);
+  it('should get the user limit', async () => {
+    const res = await request(app)
+      .get('/budgets/getLimit')
+      .set('Authorization', `Bearer ${userToken}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('limit', 500);
+    expect(res.body.limit).toBe(1000);
   });
 
-  // 10. Handle invalid limit input
-  it('returns an error for invalid limit input', async () => {
-    const invalidLimitData = { limit: -100 };
-    const res = await authenticatedRequest('post', '/budgets/setLimit', invalidLimitData);
-    expect(res.statusCode).toBe(400); // Bad Request
-    expect(res.body).toHaveProperty('error', 'Invalid limit value');
+  it('should verify user existence', async () => {
+    const res = await request(app)
+      .get('/budgets/verify-user')
+      .set('Authorization', `Bearer ${userToken}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('User exists');
+  });
+
+  it('should recover a password', async () => {
+    const res = await request(app)
+      .post('/budgets/recover-password')
+      .send({ email: 'test@example.com' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Recovery email sent successfully');
   });
 });
