@@ -19,21 +19,6 @@ const authenticatedRequest = (method, url, data = {}) => {
 describe('Budget API', () => {
   let createdBudgetId; // Store a budget ID to use across tests
 
-  // Connect to the database before running tests (if necessary)
-  beforeAll(async () => {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/testdb', {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-    }
-  });
-
-  // Close database connection after all tests
-  afterAll(async () => {
-    await mongoose.connection.close();
-  });
-
   // 1. Fetch budgets
   it('fetches all budgets successfully', async () => {
     const res = await authenticatedRequest('get', '/budgets');
