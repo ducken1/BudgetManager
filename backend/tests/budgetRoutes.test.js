@@ -7,6 +7,13 @@ const User = require('../models/User');
 // Mock environment variables
 require('dotenv').config({ path: '.env.test' });
 
+// Mock nodemailer
+jest.mock('nodemailer', () => ({
+  createTransport: jest.fn().mockReturnValue({
+    sendMail: jest.fn().mockResolvedValue(true), // Mock successful email sending
+  }),
+}));
+
 // Setup database connection for tests
 beforeAll(async () => {
   await mongoose.connect(process.env.MONGODB_URI);
