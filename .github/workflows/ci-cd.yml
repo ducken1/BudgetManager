@@ -13,7 +13,7 @@ jobs:
     name: Run Backend Tests
     runs-on: ubuntu-latest
 
-        env: # Define your environment variables here
+    env: # Define your environment variables here
       MONGODB_URI: "mongodb+srv://ericlasic12345:tR3tN2epjGtbbrmo@database.jcoom.mongodb.net/data?retryWrites=true&w=majority&appName=Database"
       JWT_SECRET: "UOJ9EBedTuyS9EsPZvDfw19jRrYN6J"
       EMAIL_USER: "dukenotest@gmail.com"
