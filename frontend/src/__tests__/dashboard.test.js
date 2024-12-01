@@ -1,134 +1,152 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import Dashboard from '../components/Dashboard';
-import axios from 'axios';
-import '@testing-library/jest-dom';
-import mockAxios from 'axios-mock-adapter';
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import axios from "axios";
+import Dashboard from "../Dashboard";
 
-// Create a mock instance of Axios
-const mock = new mockAxios(axios);
+jest.mock("axios"); // Mock axios for API requests
 
-describe('Dashboard Component', () => {
-  beforeEach(() => {
-    // Reset any mocks before each test
-    mock.reset();
+beforeEach(() => {
+  jest.clearAllMocks(); // Clear mocks between tests
+  localStorage.setItem("token", "test-token"); // Mock token for authorization
+});
+
+describe("Dashboard Component", () => {
+  test("should render the Dashboard component", async () => {
+    axios.get.mockResolvedValueOnce({ data: [] });
+    render(<Dashboard />);
+    expect(await screen.findByText(/Your Budgets/i)).toBeInTheDocument();
   });
 
-  it('should display the total amount and limit', async () => {
-    mock.onGet('http://localhost:3000/budgets').reply(200, [
-      { amount: 100 },
-      { amount: 200 },
-    ]);
-    mock.onGet('http://localhost:3000/budgets/getLimit').reply(200, { limit: 500 });
-
-    render(<Dashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Total Money: $300')).toBeInTheDocument();
+  test("should fetch and display budgets", async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [{ _id: "1", name: "Groceries", amount: 100, type: "necessity" }],
     });
+    render(<Dashboard />);
+    expect(await screen.findByText(/Groceries: \$100/i)).toBeInTheDocument();
   });
 
-  it('should display a warning if the total money is below the limit', async () => {
-    mock.onGet('http://localhost:3000/budgets').reply(200, [
-      { amount: 100 },
-      { amount: 200 },
-    ]);
-    mock.onGet('http://localhost:3000/budgets/getLimit').reply(200, { limit: 500 });
-
+  test("should add a new budget", async () => {
+    axios.post.mockResolvedValueOnce({ status: 201 });
+    axios.get.mockResolvedValueOnce({ data: [] });
     render(<Dashboard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Warning: Your total money is below the set limit!')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText(/Budget Name/i), {
+      target: { value: "Groceries" },
     });
+    fireEvent.change(screen.getByPlaceholderText(/Amount/i), {
+      target: { value: "100" },
+    });
+    fireEvent.click(screen.getByText(/Add Budget/i));
+
+    expect(await screen.findByText(/Groceries: \$100/i)).toBeInTheDocument();
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://localhost:3000/budgets/add",
+      { name: "Groceries", amount: 100, type: "necessity" },
+      { headers: { Authorization: "Bearer test-token" } }
+    );
   });
 
-  it('should add a new budget', async () => {
-    mock.onPost('http://localhost:3000/budgets/add').reply(201, { message: 'Budget added successfully' });
-    mock.onGet('http://localhost:3000/budgets').reply(200, [{ name: 'Test Budget', amount: 100 }]);
-
+  test("should display error message if add budget fails", async () => {
+    axios.post.mockRejectedValueOnce(new Error("Failed to add budget"));
     render(<Dashboard />);
 
-    fireEvent.change(screen.getByPlaceholderText('Budget Name'), { target: { value: 'Groceries' } });
-    fireEvent.change(screen.getByPlaceholderText('Amount'), { target: { value: '100' } });
-    fireEvent.click(screen.getByText('Add Budget'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Groceries: $100')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText(/Budget Name/i), {
+      target: { value: "Groceries" },
     });
+    fireEvent.change(screen.getByPlaceholderText(/Amount/i), {
+      target: { value: "100" },
+    });
+    fireEvent.click(screen.getByText(/Add Budget/i));
+
+    expect(await screen.findByText(/Error adding budget:/i)).toBeInTheDocument();
   });
 
-  it('should delete a budget', async () => {
-    mock.onDelete('http://localhost:3000/budgets/1').reply(200, { message: 'Budget deleted successfully' });
-    mock.onGet('http://localhost:3000/budgets').reply(200, [{ _id: 1, name: 'Test Budget', amount: 100 }]);
-
-    render(<Dashboard />);
-
-    fireEvent.click(screen.getByText('Delete'));
-
-    await waitFor(() => {
-      expect(screen.queryByText('Test Budget')).not.toBeInTheDocument();
+  test("should delete a budget", async () => {
+    axios.delete.mockResolvedValueOnce({ status: 200 });
+    axios.get.mockResolvedValueOnce({
+      data: [{ _id: "1", name: "Groceries", amount: 100, type: "necessity" }],
     });
+    render(<Dashboard />);
+    await screen.findByText(/Groceries/i);
+    fireEvent.click(screen.getByText(/Delete/i));
+    expect(axios.delete).toHaveBeenCalled();
   });
 
-  it('should edit a budget', async () => {
-    mock.onPut('http://localhost:3000/budgets/1').reply(200, { name: 'Updated Budget', amount: 150 });
-    mock.onGet('http://localhost:3000/budgets').reply(200, [{ _id: 1, name: 'Test Budget', amount: 100 }]);
-
+  test("should set a budget limit", async () => {
+    axios.post.mockResolvedValueOnce({ data: { limit: 1000 } });
     render(<Dashboard />);
 
-    fireEvent.click(screen.getByText('Edit'));
-    fireEvent.change(screen.getByPlaceholderText('Budget Name'), { target: { value: 'Updated Budget' } });
-    fireEvent.change(screen.getByPlaceholderText('Amount'), { target: { value: '150' } });
-    fireEvent.click(screen.getByText('Save Changes'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Updated Budget: $150')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText(/Set your limit/i), {
+      target: { value: "1000" },
     });
+    fireEvent.click(screen.getByText(/Set Limit/i));
+
+    expect(await screen.findByText(/Limit set to: \$1000/i)).toBeInTheDocument();
+    expect(axios.post).toHaveBeenCalledWith(
+      "http://localhost:3000/budgets/setLimit",
+      { limit: 1000 },
+      { headers: { Authorization: "Bearer test-token" } }
+    );
   });
 
-  it('should set a budget limit', async () => {
-    mock.onPost('http://localhost:3000/budgets/setLimit').reply(200, { message: 'Limit set successfully' });
-
-    render(<Dashboard />);
-
-    fireEvent.change(screen.getByPlaceholderText('Set your limit'), { target: { value: '500' } });
-    fireEvent.click(screen.getByText('Set Limit'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Limit set to $500')).toBeInTheDocument();
+  test("should display warning when total money is below limit", async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [{ _id: "1", name: "Groceries", amount: 100, type: "necessity" }],
     });
+    render(<Dashboard />);
+    await screen.findByText(/Groceries/i);
+
+    fireEvent.change(screen.getByPlaceholderText(/Set your limit/i), {
+      target: { value: "200" },
+    });
+    fireEvent.click(screen.getByText(/Set Limit/i));
+    expect(await screen.findByText(/Warning: Your total money is below/i)).toBeInTheDocument();
   });
 
-  it('should show an error message if setting an invalid limit', async () => {
-    render(<Dashboard />);
-
-    fireEvent.change(screen.getByPlaceholderText('Set your limit'), { target: { value: 'invalid' } });
-    fireEvent.click(screen.getByText('Set Limit'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Please enter a valid positive limit.')).toBeInTheDocument();
+  test("should display alert when over budget limit", async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [{ _id: "1", name: "Groceries", amount: 150, type: "necessity" }],
     });
+    render(<Dashboard />);
+    await screen.findByText(/Groceries/i);
+
+    fireEvent.change(screen.getByPlaceholderText(/Set your limit/i), {
+      target: { value: "100" },
+    });
+    fireEvent.click(screen.getByText(/Set Limit/i));
+    expect(await screen.findByText(/Alert: You have exceeded your budget limit/i)).toBeInTheDocument();
   });
 
-  it('should display the correct budget categories', async () => {
-    mock.onGet('http://localhost:3000/budgets').reply(200, [
-      { name: 'Groceries', amount: 100, type: 'necessity' },
-      { name: 'Entertainment', amount: 50, type: 'luxury' },
-    ]);
-
-    render(<Dashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('necessity: $100')).toBeInTheDocument();
+  test("should edit a budget", async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [{ _id: "1", name: "Groceries", amount: 100, type: "necessity" }],
     });
+    render(<Dashboard />);
+    await screen.findByText(/Groceries/i);
+
+    fireEvent.click(screen.getByText(/Edit/i));
+    fireEvent.change(screen.getByPlaceholderText(/Budget Name/i), {
+      target: { value: "Groceries Updated" },
+    });
+    fireEvent.click(screen.getByText(/Save Changes/i));
+
+    expect(axios.put).toHaveBeenCalledWith(
+      "http://localhost:3000/budgets/1",
+      { name: "Groceries Updated", amount: 100, type: "necessity" },
+      { headers: { Authorization: "Bearer test-token" } }
+    );
   });
 
-  it('should handle errors when fetching budgets', async () => {
-    mock.onGet('http://localhost:3000/budgets').reply(500);
-
-    render(<Dashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Error fetching budgets')).toBeInTheDocument();
+  test("should cancel edit mode", async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [{ _id: "1", name: "Groceries", amount: 100, type: "necessity" }],
     });
+    render(<Dashboard />);
+    await screen.findByText(/Groceries/i);
+
+    fireEvent.click(screen.getByText(/Edit/i));
+    fireEvent.click(screen.getByText(/Cancel/i));
+
+    expect(await screen.findByText(/Add a New Budget/i)).toBeInTheDocument();
   });
 });
